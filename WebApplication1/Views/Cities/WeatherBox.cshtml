@@ -1,0 +1,240 @@
+﻿@using WebApplication1.Data;
+@model WebApplication1.Models.Cities
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather</title>
+    @*Styles for weather box*@
+    <style>
+
+        .main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #87ceeb;
+            margin: 0;
+        }
+
+        .containerwb {
+            position: relative;
+            width: 400px;
+            height: 605px;
+            background: #fff;
+            padding: 28px 32px;
+            overflow: hidden;
+            border-radius: 18px;
+            font-family: sans-serif;
+            transition: 0.6s ease-out;
+        }
+
+        .location-box i {
+            position: absolute;
+            color: #06283D;
+            font-size: 28px;
+        }
+
+        #cityDropdown {
+            margin-left: 30px;
+        }
+
+        .weather-box {
+            text-align: center;
+        }
+
+            .weather-box .weatherIcon {
+                width: 60%;
+                margin-top: 30px;
+                margin: 0 auto;
+            }
+
+            .weather-box .temperature {
+                position: relative;
+                color: #06283D;
+                font-size: 4rem;
+                font-weight: 800;
+                margin-top: 30px;
+                margin-left: -16px;
+            }
+
+                .weather-box .temperature span {
+                    position: absolute;
+                    margin-left: 4px;
+                    font-size: 1.5rem;
+                }
+
+            .weather-box .description {
+                color: #06283D;
+                font-size: 22px;
+                font-weight: 500;
+            }
+
+        .weather-details {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+            .weather-details .humidity .weather-details .wind {
+                display: flex;
+                align-items: center;
+                width: 50%;
+                height: 100px;
+            }
+
+            .weather-details .humidity {
+                padding-left: 20px;
+                justify-content: flex-start;
+            }
+
+            .weather-details .wind {
+                padding-right: 20px;
+                justify-content: flex-end;
+            }
+
+            .weather-details i {
+                color: #06283D;
+                font-size: 26px;
+                margin-right: 10px;
+                margin-top: 6px;
+            }
+
+            .weather-details span {
+                color: #06283D;
+                font-size: 22px;
+                font-weight: 500;
+            }
+
+            .weather-details p {
+                color: #06283D;
+                font-size: 14px;
+                font-weight: 500;
+            }
+    </style>
+
+</head>
+
+<body style="background:#87ceeb;">
+
+    <div class="main">
+        <div class="containerwb">
+            <div class="location-box">
+                <i class="fa-solid fa-location-dot"></i>
+                <select id="cityDropdown">
+                    <option value="">Select a City</option>
+                </select>
+            </div>
+            <div class="weather-box">
+                <div id="weatherIcon" class="weatherIcon">
+
+                </div>
+                <p class="temperature" id="temperature">-/- C</p>
+                <p class="description" id="description">Sunny</p>
+            </div>
+            <div class="weather-details">
+                <div class="humidity">
+                    <i class="fa-solid fa-water"></i>
+                    <div class="text">
+                        <span></span>
+                        <p id="humidity">-/-%</p>
+                    </div>
+                </div>
+                <div class="wind">
+                    <i class="fa-solid fa-wind"></i>
+                    <div class="text">
+                        <span></span>
+                        <p id="windSpeed">-/-km/h</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://kit.fontawesome.com/7c8801c017.js" crossorigin="anonymous"></script>
+    <script>
+
+        $(document).ready(function () {
+            //Call to Cities/CityDropdownMenu
+            $.ajax({
+                url: '/Cities/CityDropdownMenu',
+                type: 'GET',
+                dataType: 'json',
+                success: function (cities) {
+                    populateCityDropdown(cities);
+                    console.log(cities);
+                },
+                error: function (error) {
+                    console.log('Error fetching city data', error);
+                }
+            });
+
+
+            //Mehtod to populate the dropdown menu
+            function populateCityDropdown(cities) {
+                var dropdown = $('#cityDropdown');
+                dropdown.empty();
+                dropdown.append('<option value="">Select a City</option>');
+
+                $.each(cities, function (index, city) {
+                    dropdown.append('<option value="' + city.Id + '">' + city.cityName + '</option>');
+                });
+                console.log('City IDs:', cities.map(city => city.Id).join(', '));
+            }
+        });
+
+        //Event listener to listen for changes in dropdown menu options.
+        $(document).on('change', '#cityDropdown', function () {
+            var selectedCityId = $('#cityDropdown').find(":selected").val();
+            console.log('Selected City ID:', selectedCityId);
+
+            if (selectedCityId) {
+                console.log("Here we are");
+                $.ajax({
+                    url: '/Cities/WeatherDetails',
+                    type: 'GET',
+                    data: { cityId: selectedCityId },
+                    dataType: 'json',
+                    success: function (data) {
+                        $('#temperature').text(data.Temperature);
+                        $('#description').text(data.Description);
+                        $('#humidity').text(data.Humidity);
+                        $('#windSpeed').text(data.WindSpeed);
+
+
+                        updateWeatherIcon(data.Description);
+                    },
+                    error: function (error) {
+                        console.log('Error fetching weather data', error);
+                    }
+                });
+            }
+        });
+
+        //Function to set an image icon depending on the weather condition
+        function updateWeatherIcon(weatherType) {
+            var weatherIconElement = $('#weatherIcon');
+
+            var weatherTypeImages = {
+                'Sunny': '/Content/Images/sunny.png',
+                'Windy': '/Content/Images/windy.png',
+                'Rain': '/Content/Images/rain.png',
+                'Snow': '/Content/Images/snowy.png',
+                'Cloudy': '/Content/Images/cloudy.png',
+            };
+
+            weatherIconElement.html('<img src="' + weatherTypeImages[weatherType] + '">');
+        }
+
+
+    </script>
+
+
+</body>
+
+</html>
+

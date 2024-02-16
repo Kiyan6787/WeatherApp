@@ -1,0 +1,30 @@
+﻿@using Kendo.Mvc.UI;
+
+<div class="text-center">
+    <h2>Kendo UI Grid</h2>
+    <script src="https://unpkg.com/pako/dist/pako_deflate.min.js"></script>
+
+    @(Html.Kendo().Grid<WebApplication1.Models.Cities>()
+            .Name("grid")
+            .Columns(columns =>
+            {
+                columns.Bound(c => c.Id).Width(100);
+                columns.Bound(c => c.cityName).Width(100).Title("City").HeaderHtmlAttributes(new {style = "white-space: normal"});
+                columns.Bound(c => c.temperature).Width(100).Title("Temperature");
+                columns.Bound(c => c.weatherType).Width(100).Title("Condition");
+                columns.Bound(c => c.Humidity).Width(100);
+                columns.Bound(c => c.WindSpeed).Width(100);
+            })
+            .DataSource(dataSource => dataSource
+                .Ajax()
+                .Read(read => read.Action("Select", "Cities"))
+            )
+            .ToolBar(tools =>
+            {
+                tools.Excel();
+                tools.Pdf();
+            })
+            .Filterable()
+            .Resizable(r => r.Columns(true))
+
+        )
